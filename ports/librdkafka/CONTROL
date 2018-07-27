@@ -1,0 +1,3 @@
+Source: librdkafka
+Version: v0.11.5
+Description: The Apache Kafka C/C++ library
