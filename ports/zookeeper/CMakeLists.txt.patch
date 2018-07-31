@@ -1,0 +1,30 @@
+diff --git "a/CMakeLists.txt" "b/CMakeLists.txt"
+index 00d639ea..8ce203bb 100644
+--- "a/CMakeLists.txt"
++++ "b/CMakeLists.txt"
+@@ -176,12 +176,25 @@ if(WIN32)
+ endif()
+ 
+ add_library(zookeeper STATIC ${zookeeper_sources})
++add_library(zookeeper_mt SHARED ${zookeeper_sources})
++set_target_properties(zookeeper_mt PROPERTIES
++    VERSION ${PROJECT_VERSION}
++    SOVERSION 1
++    PUBLIC_HEADER include/zookeeper.h)
++
+ target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
+ target_link_libraries(zookeeper PUBLIC
+   hashtable
+   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
+   $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
+ 
++target_include_directories(zookeeper_mt PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
++target_link_libraries(zookeeper_mt PUBLIC
++  hashtable
++  $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
++  $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
++
++  
+ if(WANT_SYNCAPI AND NOT WIN32)
+   find_package(Threads REQUIRED)
+   target_link_libraries(zookeeper PUBLIC Threads::Threads)

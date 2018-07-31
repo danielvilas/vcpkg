@@ -21,7 +21,15 @@ vcpkg_from_github(
 )
 set(SOURCE_PATH ${SOURCE_PATH_FULL}/src/c)
 
-message("Please execute ant compile_jute on ${SOURCE_PATH_FULL}")
+vcpkg_apply_patches(
+    SOURCE_PATH ${SOURCE_PATH}
+    PATCHES
+    ${CURRENT_PORT_DIR}/CMakeLists.txt.patch
+) 
+
+file(COPY ${CURRENT_PORT_DIR}/zookeeper.jute.c DESTINATION ${SOURCE_PATH}/generated/)
+file(COPY ${CURRENT_PORT_DIR}/zookeeper.jute.h DESTINATION ${SOURCE_PATH}/generated/)
+
 #execute_process(COMMAND "${CMAKE_COMMAND}" "-E" "environment")	
 
 #vcpkg_execute_required_process(
@@ -30,16 +38,25 @@ message("Please execute ant compile_jute on ${SOURCE_PATH_FULL}")
 #    LOGNAME ant-${TARGET_TRIPLET}
 #)
 
-
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
-    PREFER_NINJA # Disable this option if project cannot be built with Ninja
-    # OPTIONS -DUSE_THIS_IN_ALL_BUILDS=1 -DUSE_THIS_TOO=2
-    # OPTIONS_RELEASE -DOPTIMIZE=1
-    # OPTIONS_DEBUG -DDEBUGGABLE=1
-)
+    PREFER_NINJA
+    OPTIONS
+        -DSKIP_INSTALL_FILES=ON
+        -DSKIP_BUILD_EXAMPLES=ON
+		-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE
+) 
 
-vcpkg_install_cmake()
+vcpkg_build_cmake()
 
+foreach(libname zookeeper_mt)
+	foreach (ext dll pdb)
+		file(INSTALL ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/${libname}.${ext} DESTINATION ${CURRENT_PACKAGES_DIR}/bin)
+		file(INSTALL ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/${libname}.${ext} DESTINATION ${CURRENT_PACKAGES_DIR}/debug/bin)  
+	endforeach()
+		file(INSTALL ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/${libname}.lib DESTINATION ${CURRENT_PACKAGES_DIR}/lib)
+		file(INSTALL ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/${libname}.lib DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib)  
+endforeach()
+file(INSTALL ${SOURCE_PATH}/include/ DESTINATION ${CURRENT_PACKAGES_DIR}/include/zookeeper FILES_MATCHING PATTERN "*.h")
 # Handle copyright
-# file(INSTALL ${SOURCE_PATH}/LICENSE DESTINATION ${CURRENT_PACKAGES_DIR}/share/zookepeer_mt RENAME copyright)
+file(INSTALL ${SOURCE_PATH_FULL}/LICENSE.txt DESTINATION ${CURRENT_PACKAGES_DIR}/share/zookeeper/copyright)
